@@ -1,10 +1,19 @@
-rom django.urls import include, path
+from django.urls import include, path
 from rest_framework import routers
 
-from .views import SignUpView, UserViewSet, TokenView
+from .views import SignUpView, UserViewSet, TokenView, CategoryViewSet, GenreViewSet, TitleViewSet
 
 router = routers.SimpleRouter()
 router.register(r'users', UserViewSet, basename='users')
+
+router = routers.DefaultRouter()
+router.register(r'categories', CategoryViewSet)
+router.register(r'genres', GenreViewSet)
+router.register(r'titles', TitleViewSet)
+
+
+
+
 
 urlpatterns = [
     path('v1/', include(router.urls)),
