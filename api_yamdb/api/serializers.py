@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.shortcuts import get_object_or_404
 from datetime import date
-
 from rest_framework import serializers
-
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, Review, Comment
 
 
 class DictSlugRelatedField(serializers.SlugRelatedField):
@@ -46,3 +47,51 @@ class TitleSerializer(serializers.ModelSerializer):
         if value > year:
             raise serializers.ValidationError('Не верный год выпуска.')
         return value
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор для отзывов."""
+
+    title = serializers.SlugRelatedField(
+        slug_field='name', read_only=True
+    )
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username', many=False
+    )
+    score = serializers.IntegerField(
+        validators=[
+            MinValueValidator(1, 'Оценка должна быть не меньше 1.'),
+            MaxValueValidator(10, 'Оценка должна быть не больше 10.')
+        ],
+    )
+
+    def validate(self, data):
+        request = self.context['request']
+        author = request.user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        title = get_object_or_404(Title, pk=title_id)
+        if (
+                request.method == 'POST'
+                and Review.objects.filter(title=title, author=author).exists()
+        ):
+            raise ValidationError('Вы можете оставить только один отзыв!')
+        return data
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для комментариев."""
+
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username', many=False
+    )
+    review = serializers.SlugRelatedField(
+        slug_field='text', read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
