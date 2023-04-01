@@ -1,8 +1,11 @@
+from datetime import date
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import User
+from reviews.models import Category, Genre, Title
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -46,12 +49,6 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise ValidationError('Никнейм "me" недоступен!')
         return username
 
-from datetime import date
-
-from rest_framework import serializers
-
-from reviews.models import Category, Genre, Title
-
 
 class DictSlugRelatedField(serializers.SlugRelatedField):
     """
@@ -62,6 +59,15 @@ class DictSlugRelatedField(serializers.SlugRelatedField):
             'name': obj.name,
             'slug': obj.slug
         }
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    confirmation_code = serializers.CharField(required=True)
+    username = serializers.CharField(required=True, max_length=150)
+
+    class Meta:
+        fields = ['username', 'confirmation_code']
+        model = User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -94,11 +100,3 @@ class TitleSerializer(serializers.ModelSerializer):
         if value > year:
             raise serializers.ValidationError('Не верный год выпуска.')
         return value
-
-class TokenSerializer(serializers.ModelSerializer):
-    confirmation_code = serializers.CharField(required=True)
-    username = serializers.CharField(required=True, max_length=150)
-
-    class Meta:
-        fields = ['username', 'confirmation_code']
-        model = User

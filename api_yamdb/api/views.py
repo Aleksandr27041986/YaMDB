@@ -3,11 +3,17 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+
+from rest_framework import filters
+from rest_framework import mixins
+from rest_framework import viewsets, views, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, views, status
 from rest_framework_simplejwt.tokens import AccessToken
 
+from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer)
+from .filters import TitleFilterSet
+from reviews.models import Category, Genre, Title
 from users.models import User
 from .serializers import SignUpSerializer, UserSerializer, TokenSerializer
 
@@ -15,7 +21,7 @@ from .serializers import SignUpSerializer, UserSerializer, TokenSerializer
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    #permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
     http_method_names = ['get', 'post',
                          'patch', 'delete']
     search_fields = ['username']
@@ -48,48 +54,6 @@ def email_send(email, user):
         recipient_list=[email],
         fail_silently=False
     )
-from requests import Response
-from rest_framework import filters
-from rest_framework import mixins
-from rest_framework import viewsets
-
-from rest_framework.filters import OrderingFilter
-
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer)
-from .filters import TitleFilterSet
-from reviews.models import Category, Genre, Title
-
-
-class ListCreateDestroyViewSet(
-    mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    """
-    Базовый вьюсет для отображения списка объектов, добавления и удаления
-    объекта и с функцией поиска по полю.
-    """
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-
-
-class CategoryViewSet(ListCreateDestroyViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    lookup_field = 'slug'
-
-
-class GenreViewSet(ListCreateDestroyViewSet):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-    lookup_field = 'slug'
-
-
-class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    http_method_names = ['get', 'post', 'head', 'patch', 'delete', ]
-    filterset_class = TitleFilterSet
-
 
 
 class SignUpView(views.APIView):
@@ -156,4 +120,34 @@ class TokenView(views.APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class ListCreateDestroyViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    """
+    Базовый вьюсет для отображения списка объектов, добавления и удаления
+    объекта и с функцией поиска по полю.
+    """
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+
+class CategoryViewSet(ListCreateDestroyViewSet):
+    queryset = Category.objects.get_queryset().order_by('id')
+    serializer_class = CategorySerializer
+    lookup_field = 'slug'
+
+
+class GenreViewSet(ListCreateDestroyViewSet):
+    queryset = Genre.objects.get_queryset().order_by('id')
+    serializer_class = GenreSerializer
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.get_queryset().order_by('id')
+    serializer_class = TitleSerializer
+    http_method_names = ['get', 'post', 'head', 'patch', 'delete', ]
+    filterset_class = TitleFilterSet
