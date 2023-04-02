@@ -1,4 +1,4 @@
-rom django.urls import include, path
+from django.urls import include, path
 from rest_framework import routers
 from .views import SignUpView, UserViewSet, TokenView, CategoryViewSet, GenreViewSet, TitleViewSet, ReviewViewSet, CommentViewSet
 
