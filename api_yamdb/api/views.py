@@ -1,19 +1,21 @@
+from requests import Response
+from rest_framework import filters
+from rest_framework import mixins
+from django.shortcuts import get_object_or_404
+from rest_framework.filters import OrderingFilter
+from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer, ReviewSerializer, CommentSerializer)
+from .filters import TitleFilterSet
+from reviews.models import Category, Genre, Review, Title
+from .permissions import IsAuthorOrAdminOrReadOnly
 from annoying.functions import get_object_or_None
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.shortcuts import get_object_or_404
-
-from rest_framework import filters
-from rest_framework import mixins
-from rest_framework import viewsets, views, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import viewsets, views, status
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer)
-from .filters import TitleFilterSet
-from reviews.models import Category, Genre, Title
 from users.models import User
 from .serializers import SignUpSerializer, UserSerializer, TokenSerializer
 
@@ -122,7 +124,7 @@ class TokenView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ListCreateDestroyViewSet(
+ class ListCreateDestroyViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
@@ -135,19 +137,45 @@ class ListCreateDestroyViewSet(
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
-    queryset = Category.objects.get_queryset().order_by('id')
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
-    queryset = Genre.objects.get_queryset().order_by('id')
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.get_queryset().order_by('id')
+    queryset = Title.objects.all()
     serializer_class = TitleSerializer
     http_method_names = ['get', 'post', 'head', 'patch', 'delete', ]
     filterset_class = TitleFilterSet
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthorOrAdminOrReadOnly, ]
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews.all()
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthorOrAdminOrReadOnly, ]
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        serializer.save(author=self.request.user, review=review)
