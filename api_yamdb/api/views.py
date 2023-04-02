@@ -2,6 +2,7 @@ from requests import Response
 from rest_framework import filters
 from rest_framework import mixins
 from django.shortcuts import get_object_or_404
+# from rest_framework.filters import OrderingFilter
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer)
 from .filters import TitleFilterSet
@@ -15,6 +16,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets, views, status
 from rest_framework_simplejwt.tokens import AccessToken
+
 from users.models import User
 from .serializers import SignUpSerializer, UserSerializer, TokenSerializer
 
@@ -121,8 +123,8 @@ class TokenView(views.APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+
+
 class ListCreateDestroyViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin,
     viewsets.GenericViewSet
@@ -136,19 +138,19 @@ class ListCreateDestroyViewSet(
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.get_queryset().order_by('id')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.get_queryset().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.get_queryset().order_by('id')
     serializer_class = TitleSerializer
     http_method_names = ['get', 'post', 'head', 'patch', 'delete', ]
     filterset_class = TitleFilterSet
