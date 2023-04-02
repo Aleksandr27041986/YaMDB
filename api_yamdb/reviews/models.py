@@ -47,7 +47,7 @@ class Title(models.Model):
     description = models.TextField(blank=True, null=True,
                                    verbose_name='Описание')
     genre = models.ManyToManyField(
-        Genre, related_name='titles', db_table='reviews_genre_title',
+        Genre, related_name='titles', through='GenreTitle',
         blank=True, verbose_name='Жанр'
     )
     category = models.ForeignKey(
@@ -136,3 +136,8 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
