@@ -1,7 +1,3 @@
-# Management-команда по импорту данных из csv-файлов в базу данных проекта.
-# пример команды:
-# python manage.py import_csv_in_database --path static/data/genre.csv --models Genre
-
 import csv
 import os
 
@@ -10,10 +6,24 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 from api_yamdb.settings import BASE_DIR
-from reviews.models import GenreTitle, Title, Genre
+from reviews.models import Category
+from users.models import User
+
+# Management-команда по импорту данных из отдельных csv-файлов в базу данных
+# проекта. Пример команды:
+# python manage.py import_csv_in_database --path static/data/genre.csv
+#                                         --models Genre
+"""
+Management-команда по импорту данных из отдельных csv-файлов в базу данных
+проекта. 
+
+Пример команды:
+python manage.py import_file_in_db --path static/data/genre.csv --models Genre
+
+"""
 
 
-def read_model(model_name, path):
+def import_data(model_name, path):
     """
     Функция по добавлению в базу данных экземпляров класса указанной модели.
     В качестве аргумента принимает путь до csv-файла
@@ -24,36 +34,22 @@ def read_model(model_name, path):
         return
 
     model = model_type.model_class()
+    model.objects.all().delete()
     items = []
     path = os.path.join(BASE_DIR, path)
     with open(path, 'r', encoding='utf-8') as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
+            for key in row.keys():
+                if key == 'author':
+                    row['author'] = User.objects.get(id=row['author'])
+                elif key == 'category':
+                    row['category'] = Category.objects.get(id=row['category'])
             items.append(model(**row))
 
         if items:
             model.objects.bulk_create(items)
-
-
-# def genre_title(model_name, path):
-#     path = os.path.join(BASE_DIR, path)
-#     with open(path, 'r', encoding='utf-8') as csv_file:
-#         reader = csv.reader(csv_file, delimiter=",")
-#         count = 0
-#         for row in reader:
-#             print(row)
-#             if count == 0:
-#                 print('Начали загрузку')
-#             else:
-#                 GenreTitle.objects.create(id=row[0], title_id=row[1]),
-#                                       genre=Genre.objects.get(id=row[2]))
-#             count += 1
-#
-#
-# def import_title(self):
-#     file_to_upload = Path(BASE_DIR, 'static', 'data', 'titles.csv')
-#     with file_to_upload.open(encodings='utf-8') as r
-#
+    return f'Данный загружены в таблицу {model_name}.'
 
 
 class Command(BaseCommand):
@@ -92,6 +88,4 @@ class Command(BaseCommand):
                 raise CommandError('Количество путей и моделей не совпадает')
 
             for model_name, path in zip(models, paths):
-                # if model_name == 'GenreTitle':
-                #     genre_title(model_name, path)
-                read_model(model_name, path)
+                print(import_data(model_name, path))
