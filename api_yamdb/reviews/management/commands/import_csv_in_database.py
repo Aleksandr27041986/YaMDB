@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 from api_yamdb.settings import BASE_DIR
+from reviews.models import GenreTitle, Title, Genre
 
 
 def read_model(model_name, path):
@@ -32,6 +33,27 @@ def read_model(model_name, path):
 
         if items:
             model.objects.bulk_create(items)
+
+
+# def genre_title(model_name, path):
+#     path = os.path.join(BASE_DIR, path)
+#     with open(path, 'r', encoding='utf-8') as csv_file:
+#         reader = csv.reader(csv_file, delimiter=",")
+#         count = 0
+#         for row in reader:
+#             print(row)
+#             if count == 0:
+#                 print('Начали загрузку')
+#             else:
+#                 GenreTitle.objects.create(id=row[0], title_id=row[1]),
+#                                       genre=Genre.objects.get(id=row[2]))
+#             count += 1
+#
+#
+# def import_title(self):
+#     file_to_upload = Path(BASE_DIR, 'static', 'data', 'titles.csv')
+#     with file_to_upload.open(encodings='utf-8') as r
+#
 
 
 class Command(BaseCommand):
@@ -70,4 +92,6 @@ class Command(BaseCommand):
                 raise CommandError('Количество путей и моделей не совпадает')
 
             for model_name, path in zip(models, paths):
+                # if model_name == 'GenreTitle':
+                #     genre_title(model_name, path)
                 read_model(model_name, path)
