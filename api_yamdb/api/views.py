@@ -48,6 +48,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+
 def email_send(email, user):
     send_mail(
         subject='YaMDB Confirmation Code',
@@ -65,20 +66,15 @@ class SignUpView(views.APIView):
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
-        user = get_object_or_None(User, **serializer.initial_data)
-        if user is not None:
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        if User.objects.filter(username=username, email=email).exists():
+            user = User.objects.get(username=username, email=email)
             email_send(user.email, user)
-            return Response(
-                f'Письмо с кодом регистрации отправлено на почту {user.email}',
-                status=status.HTTP_200_OK
-            )
-        if serializer.is_valid(raise_exception=True):
-            username = serializer.validated_data.get('username')
-            email = serializer.validated_data.get('email')
-            user = User.objects.create(
-                username=username,
-                email=email
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            user = User.objects.create(username=username, email=email)
             confirmation_code = default_token_generator.make_token(user)
             user.confirmation_code = confirmation_code
             user.save()
@@ -86,11 +82,38 @@ class SignUpView(views.APIView):
             return Response(
                 serializer.data,
                 status=status.HTTP_200_OK
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+                )
+
+
+
+
+
+        # user = get_object_or_None(User, **serializer.initial_data)
+        # if user is not None:
+        #     email_send(user.email, user)
+        #     return Response(
+        #         f'Письмо с кодом регистрации отправлено на почту {user.email}',
+        #         status=status.HTTP_200_OK
+        #     )
+        # if serializer.is_valid(raise_exception=True):
+        #     username = serializer.validated_data.get('username')
+        #     email = serializer.validated_data.get('email')
+        #     user = User.objects.create(
+        #         username=username,
+        #         email=email
+        #     )
+        #     confirmation_code = default_token_generator.make_token(user)
+        #     user.confirmation_code = confirmation_code
+        #     user.save()
+        #     email_send(user.email, user)
+        #     return Response(
+        #         serializer.data,
+        #         status=status.HTTP_200_OK
+        #     )
+        # return Response(
+        #     serializer.errors,
+        #     status=status.HTTP_400_BAD_REQUEST
+        # )
 
 
 class TokenView(views.APIView):

@@ -1,12 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from datetime import date
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
-
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from users.models import User
 from reviews.models import Category, Genre, Title, Review, Comment
 
@@ -29,24 +30,36 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
 
-class SignUpSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['username', 'email']
-        model = User
-        extra_kwargs = {
-            'email': {
-                'required': True
-            },
-            'username': {
-                'required': True
-            }
-        }
-        validators = [
-            UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=['username', 'email']
-            )
-        ]
+class SignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254, required=True)
+    username = serializers.CharField(max_length=150, required=True, validators=[UnicodeUsernameValidator(),])
+
+# class SignUpSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         fields = ['username', 'email']
+#         model = User
+#         extra_kwargs = {
+#             'email': {
+#                 'required': True
+#             },
+#             'username': {
+#                 'required': True
+#             }
+#         }
+#     validators = [
+#         UniqueTogetherValidator(
+#             queryset=User.objects.all(),
+#             fields=['username', 'email']
+#         )
+#     ]
+    def validate(self, data):
+        if User.objects.filter(username=data['username'], email=data['email']).exists():
+            return data
+        if User.objects.filter(email=data['email']).exists() and not User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError('Пользователь с таким емайлом существует')
+        return data
+
+
 
     def validate_username(self, username):
         if username == 'me'.lower():
