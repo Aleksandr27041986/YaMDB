@@ -18,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
             'role', 'first_name', 'last_name'
         ]
         model = User
+        read_only_field = ('role',)
         extra_kwargs = {
             'email': {
                 'required': True
