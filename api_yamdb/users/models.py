@@ -4,17 +4,16 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
-USER = 'user'
-MODERATOR = 'moderator'
-ADMIN = 'admin'
-ROLES = [
-    ('user', USER),
-    ('moderator', MODERATOR),
-    ('admin', ADMIN)
-]
-
 
 class User(AbstractUser):
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    ROLES = [
+        ('user', USER),
+        ('moderator', MODERATOR),
+        ('admin', ADMIN)
+    ]
     email = models.EmailField('Email', unique=True, max_length=254)
     username = models.CharField(
         'Никнеим',
@@ -47,3 +46,15 @@ class User(AbstractUser):
         ordering = ['id']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+    @property
+    def is_user(self):
+        return self.role == 'user'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin' or self.is_staff
