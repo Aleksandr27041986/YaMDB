@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 
-
 from .import_file_in_db import import_data
 
 """
