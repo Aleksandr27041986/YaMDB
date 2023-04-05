@@ -9,10 +9,7 @@ from api_yamdb.settings import BASE_DIR
 from reviews.models import Category
 from users.models import User
 
-# Management-команда по импорту данных из отдельных csv-файлов в базу данных
-# проекта. Пример команды:
-# python manage.py import_csv_in_database --path static/data/genre.csv
-#                                         --models Genre
+
 """
 Management-команда по импорту данных из отдельных csv-файлов в базу данных
 проекта. 

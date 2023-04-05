@@ -40,9 +40,59 @@ pip install -r requirements.txt
 ```bash
 python manage.py migrate
 ```
-
-5. Запустить проект:
+5. Запустить загрузку данных из всех сsv-файлов:
 
 ```bash
-python3 manage.py runserver
+python manage.py import_all_files
 ```
+
+Или загрузить самому указывая путь и модель:
+
+```bash
+python manage.py import_file_in_db --path static/data/genre.csv --models Genre
+```
+
+6. Запустить проект:
+
+```bash
+python manage.py runserver
+```
+
+### Примеры запросов:
+
+Адрес для работы с API http://127.0.0.1:8000/api/v1/
+Пример Post-запроса по адресу [titles](http://127.0.0.1:8000/api/v1/titles/)
+```json
+{
+  "name": "string",
+  "year": 0,
+  "description": "string",
+  "genre": [
+    "string"
+  ],
+  "category": "string"
+}
+```
+Полученный ответ:
+```json
+{
+"id": 0,
+"name": "string",
+"year": 0,
+"rating": 0,
+"description": "string",
+"genre": [
+{
+"name": "string",
+"slug": "string"
+}
+],
+"category": {
+"name": "string",
+"slug": "string"
+}
+}
+
+```
+Подробнее с примерами запросов и эндпоинтами можно ознакомиться в 
+[документации redoc](http://127.0.0.1:8000/redoc/)

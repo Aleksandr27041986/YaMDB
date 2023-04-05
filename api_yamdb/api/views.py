@@ -1,25 +1,25 @@
 from requests import Response
-from rest_framework import filters
-from rest_framework import mixins
-from django.shortcuts import get_object_or_404
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          ReviewSerializer, CommentSerializer)
-from .filters import TitleFilterSet
-from reviews.models import Category, Genre, Review, Title
-from annoying.functions import get_object_or_None
+
+from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from rest_framework import filters
+from rest_framework import mixins
+from rest_framework import viewsets, views, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, views, status
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
 
+from .filters import TitleFilterSet
+from .permissions import (IsAdmin, IsAdminOrReadOnly,
+                          IsAdminModAuthorOrReadOnly)
+from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
+                          ReviewSerializer, CommentSerializer,
+                          SignUpSerializer, UserSerializer, TokenSerializer)
+from reviews.models import Category, Genre, Review, Title
 from users.models import User
-from .serializers import SignUpSerializer, UserSerializer, TokenSerializer
-from .permissions import (IsAdmin, IsAdminOrReadOnly, IsAdminModAuthorOrReadOnly)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -48,6 +48,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+
 def email_send(email, user):
     send_mail(
         subject='YaMDB Confirmation Code',
@@ -65,20 +66,15 @@ class SignUpView(views.APIView):
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
-        user = get_object_or_None(User, **serializer.initial_data)
-        if user is not None:
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        if User.objects.filter(username=username, email=email).exists():
+            user = User.objects.get(username=username, email=email)
             email_send(user.email, user)
-            return Response(
-                f'Письмо с кодом регистрации отправлено на почту {user.email}',
-                status=status.HTTP_200_OK
-            )
-        if serializer.is_valid(raise_exception=True):
-            username = serializer.validated_data.get('username')
-            email = serializer.validated_data.get('email')
-            user = User.objects.create(
-                username=username,
-                email=email
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            user = User.objects.create(username=username, email=email)
             confirmation_code = default_token_generator.make_token(user)
             user.confirmation_code = confirmation_code
             user.save()
@@ -86,11 +82,7 @@ class SignUpView(views.APIView):
             return Response(
                 serializer.data,
                 status=status.HTTP_200_OK
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+                )
 
 
 class TokenView(views.APIView):
@@ -133,7 +125,7 @@ class ListCreateDestroyViewSet(
 ):
     """
     Базовый вьюсет для отображения списка объектов, добавления и удаления
-    объекта и с функцией поиска по полю.
+    объекта, с функцией поиска по полю.
     """
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
