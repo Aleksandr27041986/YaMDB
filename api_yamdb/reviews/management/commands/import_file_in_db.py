@@ -12,7 +12,7 @@ from users.models import User
 
 """
 Management-команда по импорту данных из отдельных csv-файлов в базу данных
-проекта. 
+проекта.
 
 Пример команды:
 python manage.py import_file_in_db --path static/data/genre.csv --models Genre

@@ -42,7 +42,6 @@ class SignUpSerializer(serializers.Serializer):
         if User.objects.filter(Q(username=data['username'])
                                & Q(email=data['email'])).exists():
             return data
-
         if User.objects.filter(Q(username=data['username']) |
                                Q(email=data['email'])).exists():
             raise serializers.ValidationError(

@@ -33,4 +33,3 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for path, model_name in data.items():
             print(import_data(model_name, path))
-
