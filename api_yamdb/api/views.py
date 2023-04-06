@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from requests import Response
 
 from django.core.mail import send_mail
@@ -146,7 +147,8 @@ class GenreViewSet(ListCreateDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.get_queryset().order_by('id')
+    queryset = Title.objects.all().annotate(
+        rating=Avg('reviews__score')).order_by('id')
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
     http_method_names = ['get', 'post', 'head', 'patch', 'delete', ]

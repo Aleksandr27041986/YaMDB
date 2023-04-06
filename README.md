@@ -97,3 +97,8 @@ python manage.py runserver
 ```
 Подробнее с примерами запросов и эндпоинтами можно ознакомиться в 
 [документации redoc](http://127.0.0.1:8000/redoc/)
+
+#### Авторы проекта:
+Шестаков Александр - [github](https://github.com/Aleksandr27041986)
+Дмитрий Кучмин - [github](https://github.com/KuchminOG)
+Иван Сапожников - [github](https://github.com/8312-ru)
