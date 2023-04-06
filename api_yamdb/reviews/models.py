@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from users.models import User
@@ -8,7 +10,7 @@ class Category(models.Model):
     Модель представления категории произведения(например фильм, книга).
     """
     objects = models.Manager()
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, db_index=True)
     slug = models.SlugField(max_length=50, unique=True)
 
     class Meta:
@@ -25,7 +27,7 @@ class Genre(models.Model):
     Модель представления жанра произведения(например "Сказка", "Рок").
     """
     objects = models.Manager()
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, db_index=True)
     slug = models.SlugField(max_length=50, unique=True)
 
     class Meta:
@@ -42,8 +44,13 @@ class Title(models.Model):
     Модель представления произведения.
     """
     objects = models.Manager()
-    name = models.CharField(max_length=256, verbose_name='Название')
-    year = models.IntegerField(blank=True, verbose_name='Год выпуска')
+    name = models.CharField(max_length=256, verbose_name='Название',
+                            db_index=True)
+    year = models.PositiveSmallIntegerField(
+        blank=True,
+        validators=[MaxValueValidator(date.today().year)],
+        verbose_name='Год выпуска',
+        db_index=True)
     description = models.TextField(blank=True, null=True,
                                    verbose_name='Описание')
     genre = models.ManyToManyField(

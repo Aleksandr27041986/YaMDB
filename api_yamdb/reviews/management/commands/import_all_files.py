@@ -31,5 +31,6 @@ class Command(BaseCommand):
     help = 'Импорт данных из набора csv-файла в базу данных'
 
     def handle(self, *args, **options):
+        print('Начинаем загрузку данных из csv-файлов:git')
         for path, model_name in data.items():
             print(import_data(model_name, path))

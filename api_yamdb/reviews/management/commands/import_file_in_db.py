@@ -3,7 +3,7 @@ import os
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand, CommandError
-
+from django.db import IntegrityError
 
 from api_yamdb.settings import BASE_DIR
 from reviews.models import Category
@@ -26,27 +26,36 @@ def import_data(model_name, path):
     В качестве аргумента принимает путь до csv-файла
     и модель класса представления.
     """
-    model_type = ContentType.objects.filter(model=model_name.lower()).first()
+
+    model_type = ContentType.objects.filter(
+        model=model_name.lower()
+    ).first()
     if not model_type:
-        return
-
+        return f'Модели {model_name} не существует в данном проекте.'
     model = model_type.model_class()
-    model.objects.all().delete()
     items = []
-    path = os.path.join(BASE_DIR, path)
-    with open(path, 'r', encoding='utf-8') as csv_file:
-        reader = csv.DictReader(csv_file)
-        for row in reader:
-            for key in row.keys():
-                if key == 'author':
-                    row['author'] = User.objects.get(id=row['author'])
-                elif key == 'category':
-                    row['category'] = Category.objects.get(id=row['category'])
-            items.append(model(**row))
+    try:
+        path = os.path.join(BASE_DIR, path)
+        with open(path, 'r', encoding='utf-8') as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                for key in row.keys():
+                    if key == 'author':
+                        row['author'] = User.objects.get(id=row['author'])
+                    elif key == 'category':
+                        row['category'] = Category.objects.get(
+                            id=row['category'])
+                items.append(model(**row))
 
-        if items:
-            model.objects.bulk_create(items)
-    return f'Данный загружены в таблицу {model_name}.'
+            if items:
+                model.objects.bulk_create(items)
+        return f'Данный загружены в таблицу {model_name}.'
+    except FileNotFoundError:
+        return f'{path} данного файла не существует в папке.'
+    except IntegrityError:
+        return (f'Таблица {model_name} не загружена.'
+                f'Отсутствует связанная с ней таблица,'
+                f'проверьте импорт таблиц ранее.')
 
 
 class Command(BaseCommand):
