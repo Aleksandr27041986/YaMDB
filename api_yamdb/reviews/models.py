@@ -1,7 +1,7 @@
-from datetime import date
-
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+
+from .validators import validate_year
 from users.models import User
 
 
@@ -48,7 +48,7 @@ class Title(models.Model):
                             db_index=True)
     year = models.PositiveSmallIntegerField(
         blank=True,
-        validators=[MaxValueValidator(date.today().year)],
+        validators=[validate_year],
         verbose_name='Год выпуска',
         db_index=True)
     description = models.TextField(blank=True, null=True,
