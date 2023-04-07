@@ -107,11 +107,11 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         read_only_fields = ('rating',)
 
-    # def validate_year(self, value):
-    #     year = date.today().year
-    #     if value > year:
-    #         raise serializers.ValidationError('Не верный год выпуска.')
-    #     return value
+    def validate_year(self, value):
+        year = date.today().year
+        if value > year:
+            raise serializers.ValidationError('Не верный год выпуска.')
+        return value
 
     def get_rating(self, title):
         scores = Review.objects.filter(title_id=title.id).aggregate(
